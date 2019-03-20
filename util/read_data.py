@@ -10,6 +10,8 @@ class DataReader(abc.ABC):
         data = pd.read_csv("../data/S&P500.csv")
         data['Date'] = pd.to_datetime(data['Date'])
         data['DayOfWeek'] = data.Date.dt.weekday_name
+        data['Month'] = data.Date.dt.month
+        data.index = data.Date
         return data
 
 #%%
