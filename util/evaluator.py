@@ -1,6 +1,8 @@
 import abc
 import math
 from sklearn.metrics import mean_squared_error, r2_score
+import pandas as pd
+
 
 class ModelResults(abc.ABC):
     def __init__(self, name, mse, r2, errors, confidence_int_95):
@@ -16,10 +18,21 @@ class ModelResults(abc.ABC):
 
 
 class ModelEvaluator(abc.ABC):
-    def __init__(self):
+    def __init__(self, scaler=None):
+        '''
+
+        :param scaler: scaler to scale Volume, if the Volume should be scaled
+        '''
         super().__init__()
+        self.scaler = scaler
+
 
     def evaluate(self, model_name, volume_true, volume_pred):
+        if self.scaler:
+            volume_true = self.scaler.inverse_transform(pd.DataFrame({'Volume': volume_true}))
+            volume_true = pd.Series(volume_true[:,0])
+            volume_pred = self.scaler.inverse_transform(pd.DataFrame({'Volume': volume_pred}))
+            volume_pred = pd.Series(volume_pred[:,0])
         mse = mean_squared_error(volume_true, volume_pred)
         r2 = r2_score(volume_true, volume_pred)
         errors = volume_pred - volume_true

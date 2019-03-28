@@ -1,6 +1,7 @@
 import pandas as pd
 import abc
 import datetime
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 _NOT_NUMERIC_COLS = ['Month','DayOfWeek']
@@ -18,8 +19,10 @@ class DataReader(abc.ABC):
         self.test_start_date = test_start_date
         self.label_scaler = StandardScaler()
 
-    def read_all_data(self):
-        df = pd.read_csv("../data/S&P500.csv")
+    def read_all_data(self, file=None):
+        file = "../data/S&P500.csv" if file == None else file
+        df = pd.read_csv(file)
+        df.Volume = df.Volume.astype(np.float64)
         df['Date'] = pd.to_datetime(df['Date'])
         df['DayOfWeek'] = df.Date.dt.weekday_name
         df['Month'] = df.Date.dt.month
@@ -35,8 +38,8 @@ class DataReader(abc.ABC):
         df = df.dropna()
         return df
 
-    def read_all_data_normalized(self):
-        df = self.read_all_data()
+    def read_all_data_normalized(self, file=None):
+        df = self.read_all_data(file)
         normalized = df.copy()
         # do not care about denormalization of features
         feature_scaler = StandardScaler()
@@ -83,24 +86,24 @@ class DataReader(abc.ABC):
     def get_train_data(self, df):
         '''
         :param df:
-        :return: tuple (df_train_features, df_train_label) where df_train_features does not contain label and df_test contains only labels
+        :return: tuple (df_train_features, df_train_volume) where df_train_features does not contain label and df_test contains only labels
         '''
         df_train_features = df.drop(['Volume'], axis=1).copy()
-        df_train_features = df_train_features[df.index < self.test_start_date]
+        df_train_features = df_train_features[df_train_features.index < self.test_start_date]
 
-        df_train_label = df[['Volume']]
-        df_train_label = df_train_label[df_train_label.index < self.test_start_date]
-        return df_train_features, df_train_label
+        df_train_volume = df['Volume']
+        df_train_volume = df_train_volume[df_train_volume.index < self.test_start_date]
+        return df_train_features, df_train_volume
 
     def get_test_data(self, df):
         '''
         :param df:
-        :return: tuple (df_test_features, df_test_label) where df_test_features does not contain label and df_test_label contains only labels
+        :return: tuple (df_test_features, df_test_volume) where df_test_features does not contain label and df_test_label contains only labels
         '''
         df_test_features = df.drop(['Volume'], axis=1).copy()
-        df_test_features = df_test_features[df.index >= self.test_start_date]
+        df_test_features = df_test_features[df_test_features.index >= self.test_start_date]
 
-        df_test_label = df[['Volume']]
-        df_test_label = df_test_label[df_test_label.index >= self.test_start_date]
-        return df_test_features, df_test_label
+        df_test_volume = df['Volume']
+        df_test_volume = df_test_volume[df_test_volume.index >= self.test_start_date]
+        return df_test_features, df_test_volume
 
