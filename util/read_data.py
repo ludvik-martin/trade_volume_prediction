@@ -4,11 +4,19 @@ import datetime
 from sklearn.preprocessing import StandardScaler
 
 _NOT_NUMERIC_COLS = ['Month','DayOfWeek']
+_NOT_NORMALIZED_FEATURES = _NOT_NUMERIC_COLS + ['Volume']
+
 
 class DataReader(abc.ABC):
-    def __init__(self):
+
+    def __init__(self, test_start_date = datetime.datetime(2017, 1, 1)):
+        '''
+
+        :param test_start_date: date from which test set starts
+        '''
         super().__init__()
-        self.scaler = StandardScaler()
+        self.test_start_date = test_start_date
+        self.label_scaler = StandardScaler()
 
     def read_all_data(self):
         df = pd.read_csv("../data/S&P500.csv")
@@ -29,21 +37,17 @@ class DataReader(abc.ABC):
 
     def read_all_data_normalized(self):
         df = self.read_all_data()
-        df = df.copy()
-        normalized_columns = [item for item in df.columns if item not in _NOT_NUMERIC_COLS]
-        numeric_normalized_df = self.scaler.fit_transform(df.drop(_NOT_NUMERIC_COLS, axis=1))
-        normalized = pd.DataFrame(numeric_normalized_df, columns=normalized_columns)
-        normalized.index = df.index
-        normalized[_NOT_NUMERIC_COLS] = df[_NOT_NUMERIC_COLS]
+        normalized = df.copy()
+        # do not care about denormalization of features
+        feature_scaler = StandardScaler()
+        normalized_columns = [item for item in df.columns if item not in _NOT_NORMALIZED_FEATURES]
+        normalized[normalized_columns] = feature_scaler.fit_transform(df.drop(_NOT_NORMALIZED_FEATURES, axis=1))
+        normalized[['Volume']] = self.label_scaler.fit_transform(df[['Volume']])
         return normalized
 
-    def denormalize(self, df):
-        df = df.copy()
-        normalized_columns = [item for item in df.columns if item not in _NOT_NUMERIC_COLS]
-        numeric_denormaliezd_df = self.scaler.inverse_transform(df.drop(_NOT_NUMERIC_COLS, axis=1))
-        denormalized = pd.DataFrame(numeric_denormaliezd_df, columns=normalized_columns)
-        denormalized.index = df.index
-        denormalized[_NOT_NUMERIC_COLS] = df[_NOT_NUMERIC_COLS]
+    def denormalize_volume(self, df):
+        denormalized = df.copy()
+        denormalized[['Volume']] = self.label_scaler.inverse_transform(df[['Volume']])
         return denormalized
 
 
@@ -71,12 +75,32 @@ class DataReader(abc.ABC):
 
         # we cannot include following features, as we can use historical data from prediction only,
         # not the market data from the same day        df = df.drop(
-        df = df.drop(['Volume', 'HighLowDiff'], axis=1)
+        df = df.drop(['HighLowDiff'], axis=1)
 
-        # drop NaN values
-        df = df.dropna()
         return df
 
-#%%
 
+    def get_train_data(self, df):
+        '''
+        :param df:
+        :return: tuple (df_train_features, df_train_label) where df_train_features does not contain label and df_test contains only labels
+        '''
+        df_train_features = df.drop(['Volume'], axis=1).copy()
+        df_train_features = df_train_features[df.index < self.test_start_date]
+
+        df_train_label = df[['Volume']]
+        df_train_label = df_train_label[df_train_label.index < self.test_start_date]
+        return df_train_features, df_train_label
+
+    def get_test_data(self, df):
+        '''
+        :param df:
+        :return: tuple (df_test_features, df_test_label) where df_test_features does not contain label and df_test_label contains only labels
+        '''
+        df_test_features = df.drop(['Volume'], axis=1).copy()
+        df_test_features = df_test_features[df.index >= self.test_start_date]
+
+        df_test_label = df[['Volume']]
+        df_test_label = df_test_label[df_test_label.index >= self.test_start_date]
+        return df_test_features, df_test_label
 
