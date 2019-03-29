@@ -5,12 +5,13 @@ import pandas as pd
 
 
 class ModelResults(abc.ABC):
-    def __init__(self, name, mse, r2, errors, confidence_int_95):
+    def __init__(self, name, mse, r2, errors, volume_true, confidence_int_95):
         super().__init__()
         self.name = name
         self.mse = mse
         self.r2 = r2
         self.errors = errors
+        self.volume_true = volume_true
         self.confidence_int_95 = confidence_int_95
 
     def __str__(self):
@@ -29,10 +30,13 @@ class ModelEvaluator(abc.ABC):
 
     def evaluate(self, model_name, volume_true, volume_pred):
         if self.scaler:
+            _volume_true_index = volume_true.index
             volume_true = self.scaler.inverse_transform(pd.DataFrame({'Volume': volume_true}))
             volume_true = pd.Series(volume_true[:,0])
+            volume_true.index = _volume_true_index
             volume_pred = self.scaler.inverse_transform(pd.DataFrame({'Volume': volume_pred}))
             volume_pred = pd.Series(volume_pred[:,0])
+            volume_pred.index = _volume_true_index
         mse = mean_squared_error(volume_true, volume_pred)
         r2 = r2_score(volume_true, volume_pred)
         errors = volume_pred - volume_true
@@ -41,4 +45,4 @@ class ModelEvaluator(abc.ABC):
         n = errors.size
         # <mean - 1.96 * sigma/sqrt(n), mean + 1.96 * sigma/sqrt(n)>
         confidence_int_95 = [sample_mean - 1.96 * sigma / math.sqrt(n), sample_mean + 1.96 * sigma / math.sqrt(n)]
-        return ModelResults(model_name, mse, r2, errors, confidence_int_95)
+        return ModelResults(model_name, mse, r2, errors, volume_true, confidence_int_95, )

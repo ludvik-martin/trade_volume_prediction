@@ -20,6 +20,12 @@ class DataReader(abc.ABC):
         self.label_scaler = StandardScaler()
 
     def read_all_data(self, file=None):
+        '''
+        Reads all data from csv file.
+
+        :param file: path to the csv file
+        :return: Pandas DataFrame with the data
+        '''
         file = "../data/S&P500.csv" if file == None else file
         df = pd.read_csv(file)
         df.Volume = df.Volume.astype(np.float64)
@@ -39,6 +45,11 @@ class DataReader(abc.ABC):
         return df
 
     def read_all_data_normalized(self, file=None):
+        '''
+        Reads all data normalized with StandardScaler.
+        :param file:
+        :return: normalized data
+        '''
         df = self.read_all_data(file)
         normalized = df.copy()
         # do not care about denormalization of features
@@ -49,12 +60,27 @@ class DataReader(abc.ABC):
         return normalized
 
     def denormalize_volume(self, df):
+        '''
+        Denormalizes volume with the same scaler used for normalization.
+        :param df:
+        :return:
+        '''
         denormalized = df.copy()
         denormalized[['Volume']] = self.label_scaler.inverse_transform(df[['Volume']])
         return denormalized
 
     def read_normalized_data_for_rnn(self, file=None):
+        '''
+            Creates one-hot features from categorical features: Month, DayOfWeek.
+            Removes features that does not seem important from EDA.
+        :param file:
+        :return:
+        '''
         df = self.read_all_data_normalized(file)
+
+        # drop features by EDA
+        df = df.drop(['Open', 'High', 'Low', 'Close', 'AdjClose', 'OpenDiff', 'CloseDiff'], axis=1)
+
         # onge-hot encoding of categorical features
         df = pd.get_dummies(df, columns=['DayOfWeek', 'Month'])
         # float is more efficient than double
@@ -64,8 +90,9 @@ class DataReader(abc.ABC):
 
     def prepare_window_features_for_training(self, df, n):
         '''
-            Add past window of Volume and HighLowDiff as new features. Also removes features that does not seem
-            important from EDA.
+            Add past window of Volume. HighLowDiff and AdjCloseDiff as new features.
+            Creates one-hot features from categorical features: Month, DayOfWeek.
+            Also removes features that does not seem important from EDA.
 
         :param df: original DF
         :param n: length of the window

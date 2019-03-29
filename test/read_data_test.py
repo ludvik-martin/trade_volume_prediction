@@ -31,7 +31,6 @@ class ReadDataTest(unittest.TestCase):
         df_norm = self.reader.read_all_data_normalized()
         df_train_features, df_train_label = self.reader.get_train_data(df_norm)
         self.assertFalse('Volume' in df_train_features.columns)
-        self.assertTrue(['Volume'] == list(df_train_label.columns))
         self.assertEqual(len(df_train_features), 4277)
         self.assertEqual(len(df_train_label), 4277)
 
@@ -39,11 +38,9 @@ class ReadDataTest(unittest.TestCase):
         df_norm = self.reader.read_all_data_normalized()
         df_test_features, df_test_label = self.reader.get_test_data(df_norm)
         self.assertFalse('Volume' in df_test_features.columns)
-        self.assertTrue(['Volume'] == list(df_test_label.columns))
         self.assertEqual(len(df_test_features), 501)
         self.assertEqual(len(df_test_label), 501)
 
     def test_prepare_window_features_for_training(self):
         df_norm = self.reader.read_all_data_normalized()
         df_ml = self.reader.prepare_window_features_for_training(df_norm, 1)
-        print(df_ml.columns)

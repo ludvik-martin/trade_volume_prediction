@@ -10,7 +10,6 @@ class ModelEvaluatorTest(unittest.TestCase):
         volume_true = pd.Series([374050000, 931800000, 1009000000])
         volume_pred = pd.Series([474050000, 231800000, 809000000])
         results = evaluator.evaluate("test model", volume_true, volume_pred)
-        print(results)
 
     def test_evaluate_with_scaler(self):
         scaler = StandardScaler()
@@ -22,4 +21,3 @@ class ModelEvaluatorTest(unittest.TestCase):
         volume_pred = scaler.transform(pd.DataFrame({'Volume':volume_pred}))
         volume_pred = pd.Series(volume_pred[:,0])
         results = evaluator.evaluate("test model", volume_true, volume_pred)
-        print(results)
