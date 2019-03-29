@@ -19,3 +19,8 @@ Baseline and few traditional Machine Learning model results are in the Jupyter N
 
 ## Deep Learning models
 Deep Learning models (actually only LSTM model at the present) is in the Jupyter Notebook: [deep_learning.ipynb](notebook/deep_learning.ipynb)
+
+## Note
+All python requirements for the project are present in the *requirements.txt* file. The requirements can be installed by command:
+
+*pip install -r requirements.txt* 
