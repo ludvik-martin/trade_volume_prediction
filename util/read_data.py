@@ -53,6 +53,18 @@ class DataReader(abc.ABC):
         denormalized[['Volume']] = self.label_scaler.inverse_transform(df[['Volume']])
         return denormalized
 
+    def read_normalized_data_for_rnn(self, file=None):
+        df = self.read_all_data_normalized(file)
+        # the RNN will predict new data on the previous data, we have to shift back to proper place
+        df[['OpenDiff', 'CloseDiff', 'AdjCloseDiff']] = df[
+            ['OpenDiff', 'CloseDiff', 'AdjCloseDiff']].shift(-1)
+        # onge-hot encoding of categorical features
+        #df = df.drop(['DayOfWeek', 'Month'], axis=1)
+        df = pd.get_dummies(df, columns=['DayOfWeek', 'Month'])
+        # float is more efficient than double
+        df = df.astype(np.float32)
+        df = df.dropna()
+        return df
 
     def prepare_window_features_for_training(self, df, n):
         '''
@@ -83,16 +95,18 @@ class DataReader(abc.ABC):
         return df
 
 
-    def get_train_data(self, df):
+    def get_train_data(self, df, train_start_date = datetime.datetime(2000, 1, 1)):
         '''
         :param df:
         :return: tuple (df_train_features, df_train_volume) where df_train_features does not contain label and df_test contains only labels
         '''
         df_train_features = df.drop(['Volume'], axis=1).copy()
-        df_train_features = df_train_features[df_train_features.index < self.test_start_date]
+        df_train_features = df_train_features[(df_train_features.index < self.test_start_date)
+                                              & (df_train_features.index >= train_start_date)]
 
         df_train_volume = df['Volume']
-        df_train_volume = df_train_volume[df_train_volume.index < self.test_start_date]
+        df_train_volume = df_train_volume[(df_train_volume.index < self.test_start_date)
+                                          & (df_train_volume.index >= train_start_date)]
         return df_train_features, df_train_volume
 
     def get_test_data(self, df):
