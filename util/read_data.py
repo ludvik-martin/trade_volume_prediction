@@ -55,11 +55,7 @@ class DataReader(abc.ABC):
 
     def read_normalized_data_for_rnn(self, file=None):
         df = self.read_all_data_normalized(file)
-        # the RNN will predict new data on the previous data, we have to shift back to proper place
-        df[['OpenDiff', 'CloseDiff', 'AdjCloseDiff']] = df[
-            ['OpenDiff', 'CloseDiff', 'AdjCloseDiff']].shift(-1)
         # onge-hot encoding of categorical features
-        #df = df.drop(['DayOfWeek', 'Month'], axis=1)
         df = pd.get_dummies(df, columns=['DayOfWeek', 'Month'])
         # float is more efficient than double
         df = df.astype(np.float32)
@@ -81,16 +77,17 @@ class DataReader(abc.ABC):
         for i in range(1, n + 1):
             df["Volume" + str(i)] = df.Volume.shift(i)
             df["AdjCloseDiff" + str(i)] = df.AdjCloseDiff.shift(i)
+            df["HighLowDiff" + str(i)] = df.HighLowDiff.shift(i)
 
         # one-hot encoding of categorical data
         df = pd.get_dummies(df, columns=['DayOfWeek', 'Month'])
 
         # drop features by EDA
-        df = df.drop(['Open', 'High', 'Low', 'Close', 'AdjClose', 'OpenDiff', 'CloseDiff', 'AdjCloseDiff'], axis=1)
+        df = df.drop(['Open', 'High', 'Low', 'Close', 'AdjClose', 'OpenDiff', 'CloseDiff'], axis=1)
 
         # we cannot include following features, as we can use historical data from prediction only,
         # not the market data from the same day        df = df.drop(
-        df = df.drop(['HighLowDiff'], axis=1)
+        df = df.drop(['HighLowDiff', 'AdjCloseDiff'], axis=1)
 
         return df
 

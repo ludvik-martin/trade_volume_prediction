@@ -14,7 +14,7 @@ class ModelResults(abc.ABC):
         self.confidence_int_95 = confidence_int_95
 
     def __str__(self):
-        return "{}: MSE = {:e}, R2 = {:.3f}, confidence interval 95% = ({:,.0f} - {:,.0f})".format(self.name, self.mse, self.r2, self.confidence_int_95[0], self.confidence_int_95[1])
+        return "{}: MSE = {:e}, R2 = {:.3f}, conf. int. 95% of error = ({:,.0f} - {:,.0f})".format(self.name, self.mse, self.r2, self.confidence_int_95[0], self.confidence_int_95[1])
 
 
 class ModelEvaluator(abc.ABC):

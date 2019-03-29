@@ -42,3 +42,8 @@ class ReadDataTest(unittest.TestCase):
         self.assertTrue(['Volume'] == list(df_test_label.columns))
         self.assertEqual(len(df_test_features), 501)
         self.assertEqual(len(df_test_label), 501)
+
+    def test_prepare_window_features_for_training(self):
+        df_norm = self.reader.read_all_data_normalized()
+        df_ml = self.reader.prepare_window_features_for_training(df_norm, 1)
+        print(df_ml.columns)
