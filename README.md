@@ -1,7 +1,7 @@
 # Trade Volume Prediction
 
 ## Abstract
-Purpose of this project is to develop model for prediction of the trade Volume of the **S&amp;P 500 index**.
+Purpose of this project is to develop model for prediction of the **S&amp;P 500 Volume**.
 
 ## Validation
 Only historical data can be used for prediction of the volume: Volume(t)=f(Features(1,...,t-1))
